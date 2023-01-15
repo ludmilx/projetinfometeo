@@ -32,9 +32,8 @@ verifier_doublon () {
   fi
 }
 
-
 selection_latitude() {
-  if [[ "$longmin" || "$longmax" ]]
+  if [[ "$latmin" || "$latmax" ]]
   then
     erreur "la latitude existe déjà"
   fi
@@ -64,7 +63,6 @@ do
     --help)
       aide
       ;;
-
     -f) #fichier d'entrée
       verifier_doublon "entree"
       entree="$2"
@@ -79,23 +77,23 @@ do
       verifier_doublon "inversion"
       inversion="a"
       ;;
-    -F) # France et Corse
+    -F) #France et Corse
       selection_longitude '2.347699' '3.171137'
       selection_latitude '42.224831' '50.872278'
       ;;
-    -O) # océan indien
+    -O) #océan indien
       selection_longitude '64.740824' '73.887425'
       selection_latitude '-50.746884' '20.617361'
       ;;
-    -A) # Antilles
+    -A) #Antilles
       selection_longitude '-61.464237' '-60.869146'
       selection_latitude '14.378691' '16.495874'
       ;;
-    -S) #st Pierre et Miquelon
+    -S) #St Pierre et Miquelon
       selection_longitude '-56.165470' '-56.221811'
       selection_latitude '46.749731' '46.814618'
       ;;
-    -G) # Guyane française
+    -G) #Guyane française
       selection_longitude '-54.416198' '-53.866522'
       selection_latitude '2.210536' '5.979497'
       ;;
@@ -138,7 +136,7 @@ do
       shift
       ;;
   esac
-  shift # passe au prochain argument
+  shift #passe au prochain argument
 done
 
 if [[ ! "$entree" ]]
@@ -150,3 +148,14 @@ if [[ ! "$sortie" ]] #vérifier que -o existe
 then
   erreur "l'argument -o est obligatoire"
 fi
+
+filtrage_coordonnees(){
+  if [[ "$latmin" && "$latmax" && "$longmin" && "$longmax" ]]
+  then
+    head "$entree" | awk "\$10 >= $latmin && \$10 <= $latmax && \$11 >= $longmin && \$11 <= $longmax" FS='[;,]' > "$sortie"
+  fi
+
+}
+
+
+filtrage_coordonnees
