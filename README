@@ -1,0 +1,11 @@
+compilation:
+
+make
+
+ou
+
+make && ./main
+
+ou (force à recompiler si changement pas trouvé)
+
+make -B && ./main
