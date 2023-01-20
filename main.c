@@ -1,62 +1,45 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "valeur.h"
+#include "liste.h"
+#include "avl.h"
 
 // rendre le 3 février max
 
-// typedef struct {
-//     int valeurs[4];
-//     time_t date,
-//     ...
-// }
-
-typedef struct {
-    int* buffer;
-    int taille;
-    int indice;
-} Liste;
-
-Liste* creerListe(int taille);
-void listeAjouter(Liste *liste, int n);
-void desallouerListe(Liste *liste);
-
-typedef struct _NoeudABR {
-    int valeur;
-    struct _NoeudABR* gauche;
-    struct _NoeudABR* droite;
-} NoeudABR;
-
-typedef struct _NoeudAVL {
-    int valeur;
-    struct _NoeudAVL* gauche;
-    struct _NoeudAVL* droite;
-} NoeudAVL;
-
-NoeudAVL* creerAVL(Liste* listeDepart);
-NoeudAVL* nouveauNoeud(int element);
-NoeudAVL* enfantInferieur(NoeudAVL* noeud);
-NoeudAVL* enfantSuperieur(NoeudAVL* noeud);
-NoeudAVL* rotationDroite(NoeudAVL* noeud);
-NoeudAVL* rotationGauche(NoeudAVL* noeud);
-
-// NoeudAVL* parent(NoeudAVL* noeud);
-NoeudAVL* nouvelEnfant(NoeudAVL* parent, int element);
-int equilibre(NoeudAVL* noeud);
-int hauteur(NoeudAVL* noeud);
-void elements(NoeudAVL* noeud, Liste* out);
-void desallouerAVL(NoeudAVL* noeud);
+// typedef struct _NoeudABR {
+//     int valeur;
+//     struct _NoeudABR* gauche;
+//     struct _NoeudABR* droite;
+// } NoeudABR;
 
 int main(int argc, char** argv) {
     Liste* l = creerListe(10);
-    listeAjouter(l, 0);
-    listeAjouter(l, 1);
-    listeAjouter(l, 3);
-    listeAjouter(l, 4);
-    listeAjouter(l, -3);
-    listeAjouter(l, 2);
-    listeAjouter(l, 8);
-    listeAjouter(l, 9);
+    Valeur v = {
+        .colonnes = { 0, 1, 0, 8 },
+        .focusComparaison = 0
+    };
+    listeAjouter(l, v);
+    v.colonnes[0] = 1;
+    listeAjouter(l, v);
+    v.colonnes[0] = 2;
+    listeAjouter(l, v);
+    v.colonnes[0] = -19;
+    listeAjouter(l, v);
+    v.colonnes[0] = 3;
+    listeAjouter(l, v);
+    v.colonnes[0] = 0;
+    listeAjouter(l, v);
+    v.colonnes[0] = 7;
+    listeAjouter(l, v);
+    v.colonnes[0] = -6;
+    listeAjouter(l, v);
+    v.colonnes[0] = 9;
+    listeAjouter(l, v);
+    v.colonnes[0] = 11;
+    listeAjouter(l, v);
     NoeudAVL* avl = creerAVL(l);
-    // printf("%d\n", equilibre(avl));
+    printf("-----------------------\n");
+    printf("%d\n", equilibre(avl));
 
 
 
@@ -112,210 +95,6 @@ int main(int argc, char** argv) {
     // fclose(fp);
 
     // return 0;
-}
-
-Liste* creerListe(int taille) {
-    Liste* nouvelleListe = malloc(sizeof(Liste));
-    nouvelleListe->indice = 0;
-    nouvelleListe->taille = taille;
-    nouvelleListe->buffer = malloc(sizeof(int) * taille);
-    return nouvelleListe;
-}
-
-void listeAjouter(Liste *liste, int n) {
-    if (liste->taille == liste->indice) {
-        liste->taille *= 2;
-        liste->buffer = realloc(liste->buffer, sizeof(int) * liste->taille);
-    }
-    liste->buffer[liste->indice] = n;
-    liste->indice++;
-}
-
-void desallouerListe(Liste *liste) {
-    free(liste->buffer);
-    liste->taille = 0;
-    free(liste);
-}
-
-void echanger(Liste *liste, int a, int b) {
-    int buffer = liste->buffer[a];
-    liste->buffer[a] = liste->buffer[b];
-    liste->buffer[b] = buffer;
-}
-
-int partition(Liste *liste, int premier, int dernier, int pivot) {
-    pivot = liste->buffer[(premier+dernier)/2];
-    int i = premier - 1;
-    int j = dernier - 1;
-
-    // do {
-
-    // } while();
-}
-
-NoeudAVL* creerAVL(Liste* listeDepart) {
-    if (listeDepart->taille > 0) {
-        NoeudAVL* nouveau = nouveauNoeud(listeDepart->buffer[0]);
-        for (int i = 1; i < listeDepart->taille; i++) {
-            printf("+ %d\n", listeDepart->buffer[i]);
-            if (listeDepart->buffer[i] > listeDepart->buffer[0]) {
-                nouveau->droite = nouvelEnfant(nouveau->droite, listeDepart->buffer[i]);
-            } else {
-                nouveau->gauche = nouvelEnfant(nouveau->gauche, listeDepart->buffer[i]);
-            }
-        }
-        return nouveau;
-    } else {
-        return NULL;
-    }
-}
-
-NoeudAVL* nouveauNoeud(int element) {
-    NoeudAVL* nouveau = malloc(sizeof(NoeudAVL));
-    nouveau->droite = NULL;
-    nouveau->gauche = NULL;
-    nouveau->valeur = element;
-    return nouveau;
-}
-
-// NoeudAVL* enfantInferieur(NoeudAVL* noeud);
-// NoeudAVL* enfantSuperieur(NoeudAVL* noeud);
-// NoeudAVL* parent(NoeudAVL* noeud);
-
-//
-//
-//
-//
-
-NoeudAVL* nouvelEnfant(NoeudAVL* parent, int element) {
-    if (parent == NULL) {
-        NoeudAVL* nouveau = nouveauNoeud(element);
-        return nouveau;
-    }
-
-    if (element > parent->valeur) {
-        parent->droite = nouvelEnfant(parent->droite, element);
-    } else {
-        parent->gauche = nouvelEnfant(parent->gauche, element);
-    }
-
-    int eq = equilibre(parent);
-
-    printf("1\n");
-    if (eq > 1 && parent->gauche != NULL && element < parent->gauche->valeur) {
-        return rotationDroite(parent);
-    }
-
-    printf("2\n");
-    if (eq < -1 && parent->droite != NULL && element > parent->droite->valeur) {
-        return rotationGauche(parent);
-    }
-
-    printf("3\n");
-    if (eq > 1 && parent->gauche != NULL && element > parent->gauche->valeur) {
-        parent->gauche = rotationGauche(parent);
-        return rotationDroite(parent);
-    }
-
-    printf("4\n");
-    if (eq < -1 && parent->droite != NULL && element < parent->droite->valeur) {
-        parent->gauche = rotationDroite(parent);
-        return rotationGauche(parent);
-    }
-
-    return parent;
-}
-
-//        noeud
-//      /
-//  gauche
-//      \
-//      racine
-
-//      racine
-//      / \
-//  gauche  noeud
-
-NoeudAVL* rotationDroite(NoeudAVL* noeud) {
-    NoeudAVL * gauche = noeud->gauche;
-    NoeudAVL * racine = gauche->droite;
-
-    if (racine == NULL) {
-        racine = gauche;
-    }
-
-    racine->droite = noeud;
-
-    if (racine->gauche == NULL) {
-        racine->gauche = gauche;
-    }
-
-    return racine;
-}
-
-//     noeud
-//        \
-//        droite = racine
-//            \
-//            droite2
-// ->
-//        racine
-//         /   \
-//      noeud   droite2
-
-//     noeud
-//        \
-//        droite
-//        /    \
-//     racine   droite2
-// ->
-//      racine
-//      / \
-//  noeud droite
-//          \
-//          droite2
-
-NoeudAVL* rotationGauche(NoeudAVL* noeud) {
-    printf("1.1\n");
-    NoeudAVL * droite = noeud->droite;
-    NoeudAVL * racine = droite->gauche;
-
-    if (racine == NULL) {
-        racine = droite;
-    }
-
-    printf("1.3 %d\n", (void*) noeud);
-    printf("1.4 %d\n", (void*) racine);
-    racine->gauche = noeud;
-    printf("1.5 %d\n", (void*) droite);
-
-    if (racine->droite == NULL) {
-        racine->droite = droite;
-    }
-
-    return racine;
-}
-
-int equilibre(NoeudAVL* noeud) {
-    if (noeud == NULL) return 0;
-    return hauteur(noeud->gauche) - hauteur(noeud->droite); // plus à gauche -> nbr positif, equilibre -> 0 ou 1
-}
-
-int hauteur(NoeudAVL* noeud) {
-    if (noeud == NULL) return 0;
-
-    int hg = hauteur(noeud->gauche);
-    int hd = hauteur(noeud->droite);
-    return hg > hd ? hg + 1 : hd + 1; // opérateur ternaire
-}
-
-// void elements(NoeudAVL* noeud, Liste* out);
-
-void desallouerAVL(NoeudAVL* noeud) {
-    if (noeud == NULL) return;
-    desallouerAVL(noeud->gauche);
-    desallouerAVL(noeud->droite);
-    free(noeud);
 }
 
 /*
