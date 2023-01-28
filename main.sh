@@ -75,7 +75,7 @@ do
       ;;
     -r)
       verifier_doublon "inversion"
-      inversion="a"
+      inversion="true"
       ;;
     -F) #France et Corse
       selection_longitude '2.347699' '3.171137'
@@ -135,6 +135,18 @@ do
       p="$2"
       shift
       ;;
+    --avl) #mode de tri
+      verifier_doublon "tri"
+      tri="avl"
+      ;;
+    --tab) #mode de tri
+      verifier_doublon "tri"
+      tri="tab"
+        ;;
+    --abr) #mode de tri
+      verifier_doublon "tri"
+      tri="abr"
+      ;;
   esac
   shift #passe au prochain argument
 done
@@ -149,13 +161,71 @@ then
   erreur "l'argument -o est obligatoire"
 fi
 
-filtrage_coordonnees(){
+if [[ ! "$t" && ! "$p" && ! "$w" && ! "$m" && ! "$h" ]]
+then
+  erreur "veuillez sélectionner au moins une colonne"
+fi
+
+if [[ ! "$tri" ]]
+then
+  tri="avl"
+fi
+
+if [[ ! "$reverse" ]]
+then
+  reverse="false"
+fi
+
+filtrage_coordonnees() {
   if [[ "$latmin" && "$latmax" && "$longmin" && "$longmax" ]]
   then
     head "$entree" | awk "\$10 >= $latmin && \$10 <= $latmax && \$11 >= $longmin && \$11 <= $longmax" FS='[;,]' > "$sortie"
+  elif [[ "$latmin" && "$latmax" ]]
+  then
+    head "$entree" | awk "\$10 >= $latmin && \$10 <= $latmax" FS='[;,]' > "$sortie"
+  elif [[ "$longmin" && "$longmax" ]]
+  then
+    head "$entree" | awk "\$11 >= $longmin && \$11 <= $longmax" FS='[;,]' > "$sortie"
+  else
+    head "$entree" > "coord_${1}_$sortie"
   fi
-
 }
 
+filtrage_colonnes() {
+  cut -f "$2" -d ";" "coord_${1}_$sortie" > "colonne_${1}_$sortie"
+}
 
-filtrage_coordonnees
+if [[ "$t" ]] #température
+then
+  filtrage_coordonnees "t$t"
+  filtrage_colonnes "t$t" "1,2,11,12,13"
+  ./app "colonne_t$t_$sortie" "$sortie" "t$t" "$tri" "$reverse"
+fi
+
+if [[ "$p" ]] #pression
+then
+  filtrage_coordonnees "p$p"
+  filtrage_colonnes "p$p" "1,2,3,7"
+  ./app "colonne_p$p_$sortie" "$sortie" "p$p" "$tri" "$reverse"
+fi
+
+if [[ "$w" ]] #vent
+then
+  filtrage_coordonnees "w"
+  filtrage_colonnes "w" "1,2,4,5"
+  ./app "colonne_w_$sortie" "$sortie" "w" "$tri" "$reverse"
+fi
+
+if [[ "$h" ]] #altitude
+then
+  filtrage_coordonnees "h"
+  filtrage_colonnes "h" "1,2,14"
+  ./app "colonne_h_$sortie" "$sortie" "h" "$tri" "$reverse"
+fi
+
+if [[ "$m" ]] #humidité
+then
+  filtrage_coordonnees "m"
+  filtrage_colonnes "m" "1,2,6"
+  ./app "colonne_m_$sortie" "$sortie" "m" "$tri" "$reverse"
+fi
