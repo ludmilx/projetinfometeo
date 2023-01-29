@@ -4,13 +4,15 @@
 #include "valeur.h"
 
 typedef struct {
-    Valeur** buffer;
+    Valeur* buffer;
     int taille;
     int indice;
 } Liste;
 
-Liste* creerListe(int taille);
-void listeAjouter(Liste *liste, Valeur valeur);
-void desallouerListe(Liste *liste);
+Liste* listeCreer(int taille);
+void listeAjouter(Liste *liste, Valeur *valeur);
+void listeDesallouer(Liste *liste);
+void listeAfficher(Liste *liste);
+void listeTrier(Liste *liste);
 
 #endif
