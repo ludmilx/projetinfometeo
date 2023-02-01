@@ -11,4 +11,12 @@ run: app
 #	gcc -c -o $@ $<
 
 # main: $(OBJ)
-#	gcc -o $@ $^ 
+#	gcc -o $@ $^
+
+# OBJ = main.o liste.o abr.o avl.o valeur.o
+
+# %.o: %.c
+#	gcc -g -c -o $@ $<
+
+# main: $(OBJ)
+#	gcc -g -o $@ $^

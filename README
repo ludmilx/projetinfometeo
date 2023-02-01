@@ -1,3 +1,9 @@
+exemple utilisation :
+./main --abr -f test3.csv -o out.csv -r
+
+voir code d'erreur ensuite :
+echo $?
+
 compilation:
 
 make

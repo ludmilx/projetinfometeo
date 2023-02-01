@@ -1,214 +1,116 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
 #include "valeur.h"
 #include "liste.h"
 #include "avl.h"
-#include "abl.h"
+#include "abr.h"
 
-// typedef struct _NoeudABR {
-//     int valeur;
-//     struct _NoeudABR* gauche;
-//     struct _NoeudABR* droite;
-// } NoeudABR;
-
-void testTriRapide() {
-    Liste* l = listeCreer(2);
-    Valeur v = {
-        .colonnes = { 0, 1, 0, 8 },
-        .focusComparaison = 0
-    };
-    listeAjouter(l, &v);
-    v.colonnes[0] = 1;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 2;
-    listeAjouter(l, &v);
-    v.colonnes[0] = -19;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 3;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 0;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 7;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 4;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 9;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 11;
-    listeAjouter(l, &v);
-
-    listeAfficher(l);
-    listeTrier(l);
-    listeAfficher(l);
-}
-
-void testAvl() {
-    Liste* l = listeCreer(2);
-    Valeur v = {
-        .colonnes = { 0, 1, 0, 8 },
-        .focusComparaison = 0
-    };
-    listeAjouter(l, &v);
-    v.colonnes[0] = 1;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 2;
-    listeAjouter(l, &v);
-    v.colonnes[0] = -19;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 3;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 0;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 7;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 4;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 9;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 11;
-    listeAjouter(l, &v);
-    NoeudAVL* avl = avlCreer(l);
-    Liste* lTriee = listeCreer(2);
-    listeAfficher(l);
-    avlElements(avl, lTriee);
-    listeAfficher(lTriee);
-    avlDesallouer(avl);
-    listeDesallouer(l);
-    listeDesallouer(lTriee);
-}
-
-void testAbl() {
-    Liste* l = listeCreer(2);
-    Valeur v = {
-        .colonnes = { 0, 1, 0, 8 },
-        .focusComparaison = 0
-    };
-    listeAjouter(l, &v);
-    v.colonnes[0] = 1;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 2;
-    listeAjouter(l, &v);
-    v.colonnes[0] = -19;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 3;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 0;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 7;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 4;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 9;
-    listeAjouter(l, &v);
-    v.colonnes[0] = 11;
-    listeAjouter(l, &v);
-    NoeudABL* abl = ablCreer(l);
-    Liste* lTriee = listeCreer(2);
-    listeAfficher(l);
-    ablElements(abl, lTriee);
-    listeAfficher(lTriee);
-    ablDesallouer(abl);
-    listeDesallouer(l);
-    listeDesallouer(lTriee);
-}
+#define MODE_TRI_TAB 0
+#define MODE_TRI_ABR 1
+#define MODE_TRI_AVl 2
 
 int main(int argc, char** argv) {
-    // truc.csv
-    // 0 1 -> id, date
-    // 2 3 4 5 6 7 -> donnees
-    // 8 -> coordonnees
-    // 9 10 11 -> donnees
-    // 12 13 -> alt/communes
-
-    if (argc <= 4) {
+    if (argc <= 5) {
         return 1;
     }
+
+    char* nomFichierIn = NULL;
+    char* nomFichierOut = NULL;
+    int decroissant = 0;
+    int modeTri = -1;
+
+    char* argPrec = "";
+    for (int i = 1; i < argc; i++) {
+        char* arg = argv[i];
+
+        if (strcmp(argPrec, "-o") == 0) {
+            if (arg[0] == '-') {
+                return 1;
+            }
+            nomFichierOut = arg;
+            argPrec = "";
+        } else if (strcmp(argPrec, "-f") == 0) {
+            if (arg[0] == '-') {
+                return 1;
+            }
+            nomFichierIn = arg;
+            argPrec = "";
+        } else if (strcmp(arg, "--tab") == 0) {
+            if (modeTri != -1) return 1;
+            modeTri = MODE_TRI_TAB;
+        } else if (strcmp(arg, "--avl") == 0) {
+            if (modeTri != -1) return 1;
+            modeTri = MODE_TRI_TAB;
+        } else if (strcmp(arg, "--abr") == 0) {
+            if (modeTri != -1) return 1;
+            modeTri = MODE_TRI_TAB;
+        } else if (strcmp(arg, "-r") == 0) {
+            decroissant = 1;
+        } else if (strcmp(arg, "-o") == 0 || strcmp(arg, "-f") == 0) {
+            argPrec = arg;
+        }
+    }
+
+    if (modeTri == -1) modeTri = MODE_TRI_AVl;
 
     char c;
-    FILE *fichierEntree = fopen(argv[1], "r");
+    FILE *fichierEntree = fopen(nomFichierIn, "r");
 
     if (fichierEntree == NULL) {
-        return 1;
+        return 2;
     }
 
-    int nblignes = 0;
-	int nbcharligne = 0;
-    int nbcolonne = 0;
     char buffer[100] = {0};
     int curseurBuffer = 0;
-	char headerTableau[360] = {0};
     double n;
 
     Liste* liste = listeCreer(2);
 	Valeur valeur = {0};
-	valeur.focusComparaison = atoi(argv[3]);
 
     while ((c = fgetc(fichierEntree)) != EOF) {
-		if (nblignes == 0) {
-			headerTableau[nbcharligne++] = c;
-			headerTableau[nbcharligne] = '\0';
-		}
-
-		if (nblignes >= 1) {
-			valeur.ligne[nbcharligne++] = c;
-			valeur.ligne[nbcharligne] = '\0';
-
-			if (c == ';' || c == '\n') {
-				n = atof(buffer);
-				valeur.colonnes[nbcolonne] = n;
-				for (int i = 0; i < 100; i++) buffer[i] = 0;
-				curseurBuffer = 0;
-
-				if (nbcolonne == 14) {
-					listeAjouter(liste, &valeur);
-				}
-			} else {
-				buffer[curseurBuffer] = c;
-				curseurBuffer++;
-			}
-        }
-
         if (c == '\n') {
-            nbcolonne = 0;
-            nblignes++;
-			nbcharligne = 0;
-        }
-
-        if (c == ';') {
-            nbcolonne++;
+            buffer[curseurBuffer] = '\0';
+            valeur.valeur = decroissant ? atof(buffer) * -1 : atof(buffer);
+            listeAjouter(liste, &valeur);
+            curseurBuffer = 0;
+        } else {
+            buffer[curseurBuffer] = c;
+            curseurBuffer++;
         }
     }
 
-	listeAfficher(liste);
+	// listeAfficher(liste);
 	Liste *listeTriee;
 
-	int typeTri = atoi(argv[4]);
-	if (typeTri == 0) { // tri rapide sur liste directement
+	if (modeTri == MODE_TRI_TAB) { // tri rapide sur liste directement
 		listeTrier(liste);
 		listeTriee = liste;
-	} else if (typeTri == 1) { // tri avec arbre binaire
-		NoeudABL* abl = ablCreer(liste);
+	} else if (modeTri == MODE_TRI_ABR) { // tri avec arbre binaire
+		NoeudABR* abr = abrCreer(liste);
     	listeTriee = listeCreer(2);
-		ablElements(abl, listeTriee);
-	} else if (typeTri == 2) { // tri avec avl
+		abrElements(abr, listeTriee);
+	} else if (modeTri == MODE_TRI_AVl) { // tri avec avl
 		NoeudAVL* avl = avlCreer(liste);
     	listeTriee = listeCreer(2);
 		avlElements(avl, listeTriee);
 	}
 
-	listeAfficher(listeTriee);
+	// listeAfficher(listeTriee);
 
     fclose(fichierEntree);
 
-	FILE *fichierSortie = fopen(argv[2], "w");
+	FILE *fichierSortie = fopen(nomFichierOut, "w");
 
     if (fichierSortie == NULL) {
-        return 1;
+        return 3;
     }
 
-	fputs(headerTableau, fichierSortie);
 	for (int i = 0; i < listeTriee->indice; i++) {
-		fputs(listeTriee->buffer[i].ligne, fichierSortie);
+        char buffer[255] = "";
+        sprintf(buffer, "%f\n", decroissant ? listeTriee->buffer[i].valeur * -1 : listeTriee->buffer[i].valeur);
+        fputs(buffer, fichierSortie);
 	}
 
 	fclose(fichierSortie);

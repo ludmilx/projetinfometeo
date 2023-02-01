@@ -18,7 +18,7 @@ void avlAfficherRec(NoeudAVL* racine, int profondeur) {
     for (int i = 0; i < profondeur; i++) {
         for (int j = 0; j < 8; j++) printf(" ");
     }
-    printf("(%2d;%2f) \n", racine->hauteur, valeurFocus(racine->valeur));
+    printf("(%2d;%2f) \n", racine->hauteur, valeur(racine->valeur));
     avlAfficherRec(racine->droite, profondeur+1);
 }
 
@@ -27,6 +27,20 @@ void avlAfficher(NoeudAVL* racine) {
     avlAfficherRec(racine, 0);
     printf("----------------\n");
 }
+
+//        noeud
+//      /
+//     racine
+//      \
+//      inter
+
+//        noeud
+//      -/-
+//     racine
+//      \
+//      noeud
+//     /
+//    inter
 
 NoeudAVL* rotationDroite(NoeudAVL* noeud) {
 	NoeudAVL*racine = noeud->gauche;
@@ -40,6 +54,20 @@ NoeudAVL* rotationDroite(NoeudAVL* noeud) {
 
 	return racine;
 }
+
+//      noeud
+//         \
+//         racine
+//        /
+//      inter
+
+//     noeud
+//       -\-
+//        racine
+//         /
+//      noeud
+//         \
+//         inter
 
 NoeudAVL* rotationGauche(NoeudAVL* noeud) {
 	NoeudAVL* racine = noeud->droite;

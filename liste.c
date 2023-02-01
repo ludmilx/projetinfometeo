@@ -34,7 +34,7 @@ void listeDesallouer(Liste *liste) {
 void listeAfficher(Liste *liste) {
     printf("[ ");
     for (int i = 0; i < liste->indice; i++) {
-        printf("%f, ", valeurFocus(&liste->buffer[i]));
+        printf("%f, ", valeur(&liste->buffer[i]));
     }
     printf("] utilisé=%d alloué=%d\n", liste->indice, liste->taille);
 }
