@@ -20,9 +20,11 @@ int main(int argc, char** argv) {
     char* nomFichierOut = NULL;
     int decroissant = 0;
     int modeTri = -1;
+    int i = 0;
+    int j = 0;
 
     char* argPrec = "";
-    for (int i = 1; i < argc; i++) {
+    for (i=1; i < argc; i++) {
         char* arg = argv[i];
 
         if (strcmp(argPrec, "-o") == 0) {
@@ -107,9 +109,9 @@ int main(int argc, char** argv) {
         return 3;
     }
 
-	for (int i = 0; i < listeTriee->indice; i++) {
+	for (j = 0; j < listeTriee->indice; j++) {
         char buffer[255] = "";
-        sprintf(buffer, "%f\n", decroissant ? listeTriee->buffer[i].valeur * -1 : listeTriee->buffer[i].valeur);
+        sprintf(buffer, "%f\n", decroissant ? listeTriee->buffer[j].valeur * -1 : listeTriee->buffer[j].valeur);
         fputs(buffer, fichierSortie);
 	}
 
