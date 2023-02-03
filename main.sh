@@ -10,39 +10,177 @@ help_message() {
     echo "Les commandes suivantes permettent de trier les données dans le fichier meteo_filtered_data_v1 avec les options suivantes :"
     echo "  --tab : tri effectué à l'aide d'une structure linéaire (tableau ou liste chainée)"
     echo "  --abr : tri effectué à l'aide d'une structure de type ABR"
-    echo "  --avl : tri effectué à l'aide d'une structure de type AVL (défaut)"
+    echo "  --avl : tri effectué à l'aide d'une structure de type AVL (par défaut)"
     echo "  -f FILE : fichier d'entrée. Cette option est obligatoire"
     echo "  --help : affiche cette aide détaillée"
+    echo "  -d : date des données"
+    echo "  -F : France métropolitaine et Corse"
+    echo "  -G : Guyane française"
+    echo "  -Q : Antarctique"
+    echo "  -S : St Pierre et Miquelon"
+    echo "  -A : Antilles"
+    echo "  -O : océan Indien"
 }
 
-# boucle d'analyse des options
-while [ $# -gt 0 ]; do
-    case "$1" in
-        --tab)
-            tri_method="tab"
-            ;;
-        --abr)
-            tri_method="abr"
-            ;;
-        --avl)
-            tri_method="avl"
-            ;;
-        -f)
-            filename="$2"
-            shift
-            ;;
-        --help)
-            help_message
-            exit 0
-            ;;
-        *)
-            echo "Erreur : option ou argument non valide : $1"
-            help_message
-            exit 1
-            ;;
-    esac
-    shift
+erreur() {
+  echo -e "$1" #"\e[31m$1\e[0m"
+  exit 1
+}
+
+verifier_doublon () {
+  if [[ "${!1}" ]];
+  then
+    erreur "vous ne pouvez pas mettre deux fois le même paramètre"
+  fi
+}
+
+selection_latitude() {
+  if [[ "$latmin" || "$latmax" ]];
+  then
+    erreur "la latitude existe déjà"
+  fi
+  latmin="$1"
+  latmax="$2"
+}
+
+selection_longitude() {
+  if [[ "$longmin" || "$longmax" ]];
+  then
+    erreur "la longitude existe déjà"
+  fi
+  longmin="$1"
+  longmax="$2"
+}
+
+verifier_mode() {
+  if [[ "$1" -ne "1" && "$2" -ne "2" && "$3" -ne "3" ]];
+  then
+    erreur "ce mode n'existe pas"
+  fi
+}
+
+while [[ $# -gt 0 ]]
+do
+  case "$1" in
+    --help)
+      help_message
+      ;;
+    -f) #fichier d'entrée
+      verifier_doublon "entree"
+      entree="$2"
+      shift
+      ;;
+    -r)
+      verifier_doublon "inversion"
+      inversion="true"
+      ;;
+    -F) #France et Corse
+      selection_longitude '2.347699' '3.171137'
+      selection_latitude '42.224831' '50.872278'
+      ;;
+    -O) #océan indien
+      selection_longitude '64.740824' '73.887425'
+      selection_latitude '-50.746884' '20.617361'
+      ;;
+    -A) #Antilles
+      selection_longitude '-61.464237' '-60.869146'
+      selection_latitude '14.378691' '16.495874'
+      ;;
+    -S) #St Pierre et Miquelon
+      selection_longitude '-56.165470' '-56.221811'
+      selection_latitude '46.749731' '46.814618'
+      ;;
+    -G) #Guyane française
+      selection_longitude '-54.416198' '-53.866522'
+      selection_latitude '2.210536' '5.979497'
+      ;;
+    -Q) #Antarctique
+      selection_longitude '-57.056397' '-39.103781'
+      selection_latitude '-85.463275' '-63.508916'
+      ;;
+    -w) #vent
+      verifier_doublon "w"
+      w="a"
+      ;;
+    -h) #altitude
+      verifier_doublon "h"
+      h="a"
+      ;;
+    -m) #humidité
+      verifier_doublon "m"
+      m="a"
+      ;;
+    -g) #longitude
+      selection_longitude "$2" "$3"
+      shift
+      shift
+      ;;
+    -a) #latitude
+      selection_latitude "$2" "$3"
+      shift
+      shift
+      ;;
+    -d)
+      min_date="$2"
+      if ! grep -qE '^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$' <<< "$min_date"; then
+    echo "Date de format invalide : ${min_date}"
+    exit 1
+    fi
+      max_date="$3"
+      if ! grep -qE '^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$' <<< "$max_date"; then
+    echo "Date de format invalide : ${max_date}"
+    exit 1
+    fi
+      shift
+      shift
+    -t) #température
+      verifier_doublon "t"
+      verifier_mode "$2"
+      t="$2"
+      shift
+      ;;
+    -p) #pression atmosphérique
+      verifier_doublon "p"
+      verifier_mode "$2"
+      p="$2"
+      shift
+      ;;
+    --avl) #mode de tri
+      verifier_doublon "tri"
+      tri="avl"
+      ;;
+    --tab) #mode de tri
+      verifier_doublon "tri"
+      tri="tab"
+        ;;
+    --abr) #mode de tri
+      verifier_doublon "tri"
+      tri="abr"
+      ;;
+  esac
+  shift #passe au prochain argument
 done
+
+if [[ ! "$entree" ]];
+then
+  erreur "l'argument -f est obligatoire"
+fi
+
+if [[ ! "$t" && ! "$p" && ! "$w" && ! "$m" && ! "$h" ]];
+then
+  erreur "veuillez sélectionner au moins une colonne"
+fi
+
+if [[ ! "$tri" ]];
+then
+  tri="avl"
+fi
+
+if [[ ! "$reverse" ]];
+then
+  reverse="false"
+fi
+
 
 # vérification de l'existence du fichier
 if [ -z "$filename" ]; then
@@ -57,6 +195,39 @@ if [ ! -f "$filename" ]; then
     exit 1
 fi
 
+
+# Fonction pour trier les données en fonction de la date
+tri_par_date() {
+  local date=$1
+  local data_file=$2
+
+  # Extraire les lignes du fichier qui correspondent à la date choisie
+  local sorted_data=$(grep $date $data_file)
+
+  # Afficher les données triées
+  echo "$sorted_data"
+}
+
+# Fonction pour trier les données en fonction du lieu
+tri_par_lieu() {
+  local lieu=$1
+  local data_file=$2
+
+  case $location in
+    -F) location="France";;
+    -G) location="Guyane";;
+    -S) location="St Pierre et Miquelon";;
+    -A) location="Antilles";;
+    -O) location="Océan Indien";;
+    -Q) location="Antarctique";;
+  esac
+
+  # Extraire les lignes du fichier qui correspondent au lieu choisi
+  local sorted_data=$(grep $location $data_file)
+
+  # Afficher les données triées
+  echo "$sorted_data"
+}
 # Definition des options
 options=":t:p:w:h:m:"
 
@@ -77,6 +248,10 @@ while getopts $options opt; do
       ;;
     m)
       humidity=1
+      ;;
+    d) sort_by_date $OPTARG $filename
+      ;;
+    l) sort_by_location $OPTARG $filename
       ;;
     \?)
       echo "Option invalide : -$OPTARG" >&2
@@ -100,21 +275,21 @@ if [[ -n $temp_mode ]]; then
   if [[ $temp_mode -eq 1 ]];
   then
 # Extraction des donnees de temperature
-  temp_data=$(awk -F, '{if ($2 == "temperature") print $0}' meteo_filtered_data_v1.csv)
+  temp_data=$(awk -F; '{if ($2 == "temperature") print $0}' $filename)
 
 # Calcul des valeurs minimales, maximales et moyennes par station
 echo "station,min_temp,avg_temp,max_temp" > temperatures_mode1.csv
 while read line; do
-    station=$(echo $line | awk -F, '{print $1}')
-    temp=$(echo $line | awk -F, '{print $3}')
+    station=$(echo $line | awk -F; '{print $1}')
+    temp=$(echo $line | awk -F; '{print $3}')
     min_temp=$(echo "$temp" | awk 'BEGIN {min = 999999} {if ($1 < min) min = $1} END {print min}')
     max_temp=$(echo "$temp" | awk 'BEGIN {max = -999999} {if ($1 > max) max = $1} END {print max}')
     avg_temp=$(echo "$temp" | awk '{sum += $1} END {print sum/NR}')
     echo "$station,$min_temp,$avg_temp,$max_temp" >> temperatures_mode1.csv
 done <<< "$temp_data"
 
-# Trie des donnees par ordre croissant du numero de station
-sort -t, -k1 -n temperatures_mode1.csv -o temperatures_mode1.csv
+# Trie des données par ordre croissant du numéro de station
+./app -f temperatures_mode1.csv -o temperatures_mode1.csv
 
 elif [[ $temp_mode -eq 2 ]]; then
 
@@ -130,7 +305,7 @@ function average_temp {
       sum=$(echo "$sum + $temp" | bc)
       count=$((count + 1))
     fi
-  done < meteo_filtered_data_v1.csv
+  done < $filename
   average=$(echo "scale=2; $sum / $count" | bc)
   echo "$date_time, $average"
 }
@@ -141,7 +316,7 @@ if [ -f "average_temperatures.csv" ]; then
 fi
 
 # Obtenir la liste des dates/heures uniques dans le fichier de données
-date_times=$(cut -d',' -f1 meteo_filtered_data_v1.csv | sort -u)
+date_times=$(cut -d',' -f1 $filename | sort -u)
 
 # Pour chaque date/heure, obtenir la moyenne de la température
 for date_time in $date_times; do
@@ -149,12 +324,12 @@ for date_time in $date_times; do
 done
 
 # Trier le fichier de sortie en fonction de la date/heure
-sort -t',' -k1 temperatures_mode2.csv -o temperatures_mode2.csv
+./app -f temperatures_mode2.csv -o temperatures_mode2.csv
 
 elif [[ $temp_mode -eq 3 ]]; then
 
   # Extraction des données de température
-  awk -F"," '{print $1 "," $2 "," $3}' meteo_filtered_data_v1.csv > temp_data.csv
+  awk -F";" '{print $1 "," $2 "," $3}' $filename > temp_data.csv
 
   # Trier les données par date/heure puis par identifiant de station
   sort -t "," -k 2,2 -k 1,1 temp_data.csv > temperatures_mode3.csv
@@ -169,10 +344,10 @@ elif [[ $temp_mode -eq 3 ]]; then
 fi
 
 if [[ -n $pressure_mode ]]; then
-  if [[ $pressure_mode=-p1 ]];
+  if [[ $pressure_mode -eq 1 ]];
     then
   # Extraction des donnees de pression
-    pressure_data=$(awk -F, '{if ($2 == "pressure") print $0}' meteo_filtered_data_v1.csv)
+    pressure_data=$(awk -F; '{if ($2 == "pressure") print $0}' $filename)
 
   # Calcul des valeurs minimales, maximales et moyennes par station
   echo "station,min_pressure,avg_pressure,max_pressure" > pressure_mode1.csv
@@ -182,13 +357,13 @@ if [[ -n $pressure_mode ]]; then
       min_pressure=$(echo "$pressure" | awk 'BEGIN {min = 999999} {if ($1 < min) min = $1} END {print min}')
       max_pressure=$(echo "$pressure" | awk 'BEGIN {max = -999999} {if ($1 > max) max = $1} END {print max}')
       avg_pressure=$(echo "$pressure" | awk '{sum += $1} END {print sum/NR}')
-      echo "$station,$min_pressure,$avg_pressure,$max_pressure" >> temperatures_mode1.csv
+      echo "$station,$min_pressure,$avg_pressure,$max_pressure" >> pressure_mode1.csv
   done <<< "$pressure_data"
 
-  # Trie des donnees par ordre croissant du numero de station
-  sort -t, -k1 -n pressure_mode1.csv -o pressure_mode1.csv
+  # Trie des données par ordre croissant du numéro de station
+  ./app -f pressure_mode1.csv -o pressure_mode1.csv
 
-elif [[ $pressure_mode=-p2 ]]; then
+elif [[ $pressure_mode -eq 2 ]]; then
     # Fonction pour obtenir la moyenne de la pression pour une date/heure donnée
     function average_pressure {
       date_time=$1
@@ -201,7 +376,7 @@ elif [[ $pressure_mode=-p2 ]]; then
           sum=$(echo "$sum + $pressure" | bc)
           count=$((count + 1))
         fi
-      done < meteo_filtered_data_v1.csv
+      done < $filename
       average=$(echo "scale=2; $sum / $count" | bc)
       echo "$date_time, $average"
     }
@@ -212,7 +387,7 @@ elif [[ $pressure_mode=-p2 ]]; then
     fi
 
     # Obtenir la liste des dates/heures uniques dans le fichier de données
-    date_times=$(cut -d';' -f1 meteo_filtered_data_v1.csv | sort -u)
+    date_times=$(cut -d';' -f1 $filename | sort -u)
 
     # Pour chaque date/heure, obtenir la moyenne de la température
     for date_time in $date_times; do
@@ -222,10 +397,10 @@ elif [[ $pressure_mode=-p2 ]]; then
     # Trier le fichier de sortie en fonction de la date/heure
     sort -t';' -k1 pressure_mode2.csv -o pressure_mode2.csv
 
-  elif [[ $pressure_mode=-p3 ]]; then
+  elif [[ $pressure_mode -eq 3 ]]; then
 
     # Extraction des données de pression
-    awk -F";" '{print $1 "," $2 "," $7}' meteo_filtered_data_v1.csv > pressure_data.csv
+    awk -F";" '{print $1 "," $2 "," $7}' $filename > pressure_data.csv
 
     # Trier les données par date/heure puis par identifiant de station
     sort -t ";" -k 2,2 -k 1,1 pressure_data.csv > pressure_mode3.csv
@@ -241,7 +416,7 @@ elif [[ $pressure_mode=-p2 ]]; then
 
 if [[ -n $wind ]]; then
   # Extraire les colonnes contenant les informations de vent
-  cut -d ";" -f 3,4 meteo_filtered_data_v1.csv > wind_data.csv
+  cut -d ";" -f 3,4 $filename > wind_data.csv
 
   # Calculer les moyennes de vitesse et d'orientation pour chaque station
   awk -F ";" '{
@@ -260,13 +435,15 @@ if [[ -n $wind ]]; then
   rm wind_data.csv
 
 if [[ -n $altitude ]]; then
-  awk -F";" '{print $1","$14}' meteo_filtered_data_v1.csv | sort -t"," -k2,2nr > altitude_sorted_by_station.csv
+  awk -F";" '{print $1","$14}' $filename | sort -t"," -k2,2nr > altitude_sorted_by_station.csv
 fi
 
 if [[ -n $humidity ]]; then
-  awk -F";" '{print $1","$6}' meteo_filtered_data_v1.csv | sort -t"," -k2,2nr > humidite_sorted_by_station.csv
+  awk -F";" '{print $1","$6}' $filename | sort -t"," -k2,2nr > humidite_sorted_by_station.csv
 fi
 
+
+####################
 # Diagramme température et pression mode 1
 set datafile separator ";"
 set ylabel "Température (en °C)"
@@ -303,6 +480,9 @@ set palette defined (0 "blue", 1 "green", 2 "red")
 splot 'altitude_sorted_by_station.csv' using 1:2:3 with pm3d
 
 # digramme vent
+set xlabel "Longitude (Ouest-Est)"
+set ylabel "Latitude (Sud-Nord)"
+plot data using 1:2:(0):3 with vectors head filled lc rgb "red"
 
 # diagramme humidité
 set pm3d map
