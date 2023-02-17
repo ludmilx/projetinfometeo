@@ -66,8 +66,8 @@ do
       help_message
       ;;
     -f) #fichier d'entrée
-      verifier_doublon "entree"
-      entree="$2"
+      verifier_doublon "filename"
+      filename="$2"
       shift
       ;;
     -r)
@@ -102,7 +102,7 @@ do
       verifier_doublon "w"
       w="a"
       ;;
-    -h) #altitude
+    -h) #h
       verifier_doublon "h"
       h="a"
       ;;
@@ -133,7 +133,8 @@ do
     fi
       shift
       shift
-    -t) #température
+      ;;
+    -t) #temperature
       verifier_doublon "t"
       verifier_mode "$2"
       t="$2"
@@ -161,7 +162,7 @@ do
   shift #passe au prochain argument
 done
 
-if [[ ! "$entree" ]];
+if [[ ! "$filename" ]];
 then
   erreur "l'argument -f est obligatoire"
 fi
@@ -235,19 +236,19 @@ options=":t:p:w:h:m:"
 while getopts $options opt; do
   case $opt in
     t)
-      temp_mode=$OPTARG
+      t=$OPTARG
       ;;
     p)
-      pressure_mode=$OPTARG
+      p=$OPTARG
       ;;
     w)
-      wind=1
+      w=1
       ;;
     h)
-      altitude=1
+      h=1
       ;;
     m)
-      humidity=1
+      m=1
       ;;
     d) sort_by_date $OPTARG $filename
       ;;
@@ -265,14 +266,14 @@ while getopts $options opt; do
 done
 
 # Vérifie si au moins une option a été choisie
-if [[ -z $temp_mode ]] && [[ -z $pressure_mode ]] && [[ -z $wind ]] && [[ -z $altitude ]] && [[ -z $humidity ]]; then
-  echo "Au moins une option (-t, -p, -w, -h, or -m) doit être choisie." >&2
+if [[ -z $t && -z $p && -z $w && -z $h && -z $m ]]; then
+  echo "Au moins une option (-t, -p, -w, -h, ou -m) doit être choisie." >&2
   exit 1
 fi
 
 # filtrage et sortie des options choisies
-if [[ -n $temp_mode ]]; then
-  if [[ $temp_mode -eq 1 ]];
+if [[ -n $t ]]; then
+  if [[ $t -eq 1 ]];
   then
 # Extraction des donnees de temperature
   temp_data=$(awk -F; '{if ($2 == "temperature") print $0}' $filename)
@@ -291,7 +292,7 @@ done <<< "$temp_data"
 # Trie des données par ordre croissant du numéro de station
 ./app -f temperatures_mode1.csv -o temperatures_mode1.csv
 
-elif [[ $temp_mode -eq 2 ]]; then
+elif [[ $t -eq 2 ]]; then
 
 # Fonction pour obtenir la moyenne de la température pour une date/heure donnée
 function average_temp {
@@ -326,7 +327,7 @@ done
 # Trier le fichier de sortie en fonction de la date/heure
 ./app -f temperatures_mode2.csv -o temperatures_mode2.csv
 
-elif [[ $temp_mode -eq 3 ]]; then
+elif [[ $t -eq 3 ]]; then
 
   # Extraction des données de température
   awk -F";" '{print $1 "," $2 "," $3}' $filename > temp_data.csv
@@ -338,32 +339,32 @@ elif [[ $temp_mode -eq 3 ]]; then
   cat temperatures_mode3.csv
 
   else
-    echo "Mode invalide pour -t: $temp_mode" >&2
+    echo "Mode invalide pour -t: $t" >&2
     exit 1
   fi
 fi
 
-if [[ -n $pressure_mode ]]; then
-  if [[ $pressure_mode -eq 1 ]];
+if [[ -n $p ]]; then
+  if [[ $p -eq 1 ]];
     then
   # Extraction des donnees de pression
     pressure_data=$(awk -F; '{if ($2 == "pressure") print $0}' $filename)
 
   # Calcul des valeurs minimales, maximales et moyennes par station
-  echo "station,min_pressure,avg_pressure,max_pressure" > pressure_mode1.csv
+  echo "station,min_pressure,avg_pressure,max_pressure" > p1.csv
   while read line; do
       station=$(echo $line | awk -F, '{print $1}')
       pressure=$(echo $line | awk -F, '{print $7}')
       min_pressure=$(echo "$pressure" | awk 'BEGIN {min = 999999} {if ($1 < min) min = $1} END {print min}')
       max_pressure=$(echo "$pressure" | awk 'BEGIN {max = -999999} {if ($1 > max) max = $1} END {print max}')
       avg_pressure=$(echo "$pressure" | awk '{sum += $1} END {print sum/NR}')
-      echo "$station,$min_pressure,$avg_pressure,$max_pressure" >> pressure_mode1.csv
+      echo "$station,$min_pressure,$avg_pressure,$max_pressure" >> p1.csv
   done <<< "$pressure_data"
 
   # Trie des données par ordre croissant du numéro de station
-  ./app -f pressure_mode1.csv -o pressure_mode1.csv
+  ./app -f p1.csv -o p1.csv
 
-elif [[ $pressure_mode -eq 2 ]]; then
+elif [[ $p -eq 2 ]]; then
     # Fonction pour obtenir la moyenne de la pression pour une date/heure donnée
     function average_pressure {
       date_time=$1
@@ -391,101 +392,53 @@ elif [[ $pressure_mode -eq 2 ]]; then
 
     # Pour chaque date/heure, obtenir la moyenne de la température
     for date_time in $date_times; do
-      average_pressure $date_time >> pressure_mode2.csv
+      average_pressure $date_time >> p2.csv
     done
 
     # Trier le fichier de sortie en fonction de la date/heure
-    sort -t';' -k1 pressure_mode2.csv -o pressure_mode2.csv
+    sort -t';' -k1 p2.csv -o p2.csv
 
-  elif [[ $pressure_mode -eq 3 ]]; then
+  elif [[ $p -eq 3 ]]; then
 
     # Extraction des données de pression
     awk -F";" '{print $1 "," $2 "," $7}' $filename > pressure_data.csv
 
     # Trier les données par date/heure puis par identifiant de station
-    sort -t ";" -k 2,2 -k 1,1 pressure_data.csv > pressure_mode3.csv
+    sort -t ";" -k 2,2 -k 1,1 pressure_data.csv > p3.csv
 
     # Afficher les données triées
-    cat pressure_mode3.csv
+    cat p3.csv
 
     else
-      echo "Mode invalide pour -p: $pressure_mode" >&2
+      echo "Mode invalide pour -p: $p" >&2
       exit 1
     fi
   fi
 
-if [[ -n $wind ]]; then
+if [[ -n $w ]]; then
   # Extraire les colonnes contenant les informations de vent
-  cut -d ";" -f 3,4 $filename > wind_data.csv
+  cut -d ";" -f 3,4 $filename > w_data.csv
 
   # Calculer les moyennes de vitesse et d'orientation pour chaque station
   awk -F ";" '{
-    wind_speed_sum[$1] += sqrt($2^2 + $3^2);
-    wind_dir_sum[$1] += atan2($3, $2);
-    wind_count[$1]++;
+    w_speed_sum[$1] += sqrt($2^2 + $3^2);
+    w_dir_sum[$1] += atan2($3, $2);
+    w_count[$1]++;
   } END {
-    for (station in wind_speed_sum) {
-      avg_wind_speed = wind_speed_sum[station] / wind_count[station];
-      avg_wind_dir = wind_dir_sum[station] / wind_count[station];
-      printf("%s,%.2f,%.2f\n", station, avg_wind_speed, avg_wind_dir);
+    for (station in w_speed_sum) {
+      avg_w_speed = w_speed_sum[station] / w_count[station];
+      avg_w_dir = w_dir_sum[station] / w_count[station];
+      printf("%s,%.2f,%.2f\n", station, avg_w_speed, avg_w_dir);
     }
-  }' wind_data.csv | sort -n -t ";" -k 1 > avg_wind.csv
+  }' w_data.csv | sort -n -t ";" -k 1 > avg_w.csv
 
   # Supprimer le fichier temporaire
-  rm wind_data.csv
-
-if [[ -n $altitude ]]; then
-  awk -F";" '{print $1","$14}' $filename | sort -t"," -k2,2nr > altitude_sorted_by_station.csv
+  rm w_data.csv
+fi
+if [[ -n $h ]]; then
+  awk -F";" '{print $1","$14}' $filename | sort -t"," -k2,2nr > h_sorted_by_station.csv
 fi
 
-if [[ -n $humidity ]]; then
+if [[ -n $m ]]; then
   awk -F";" '{print $1","$6}' $filename | sort -t"," -k2,2nr > humidite_sorted_by_station.csv
 fi
-
-
-####################
-# Diagramme température et pression mode 1
-set datafile separator ";"
-set ylabel "Température (en °C)"
-set xlabel "Identifiant de la station"
-set title "Diagramme de barres d'erreur - Températures par station (mode 1)"
-plot "temperatures_mode1.csv" using 1:2:3:4 with errorbars title "Température"
-
-set datafile separator ";"
-set ylabel "Pression"
-set xlabel "Identifiant de la station"
-set title "Diagramme de barres d'erreur - Pressions par station (mode 1)"
-plot "pressure_mode1.csv" using 1:2:3:4 with errorbars title "Pression"
-
-# diagramme température et pression mode 2
-set xdata time
-set timefmt "%Y-%m-%d %H:%M:%S"
-set format x "%d/%m\n%H:%M"
-
-plot 'temperatures_mode2.csv' using 1:3 with lines title "Température en mode 2"
-
-set xdata time
-set timefmt "%Y-%m-%d %H:%M:%S"
-set format x "%d/%m\n%H:%M"
-
-plot 'pressure_mode2.csv' using 1:3 with lines title "Pressions en mode 2"
-
-# diagramme altitude
-set xlabel "Longitude (Ouest-Est)"
-set ylabel "Latitude (Sud-Nord)"
-set cblabel "Altitude (m)"
-set title "Carte interpolée et colorée de l'altitude"
-set pm3d
-set palette defined (0 "blue", 1 "green", 2 "red")
-splot 'altitude_sorted_by_station.csv' using 1:2:3 with pm3d
-
-# digramme vent
-set xlabel "Longitude (Ouest-Est)"
-set ylabel "Latitude (Sud-Nord)"
-plot data using 1:2:(0):3 with vectors head filled lc rgb "red"
-
-# diagramme humidité
-set pm3d map
-set xrange [<min_longitude>:<max_longitude>]
-set yrange [<min_latitude>:<max_latitude>]
-splot 'humidite_sorted_by_station.csv' using 1:2:3 with pm3d

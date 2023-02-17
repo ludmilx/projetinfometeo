@@ -1,5 +1,5 @@
 exemple utilisation :
-./main --abr -f test3.csv -o out.csv -r
+./main.sh --abr -f meteo.csv -o out.csv -r -m
 
 voir code d'erreur ensuite :
 echo $?

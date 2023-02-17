@@ -1,0 +1,5 @@
+set xdata time
+set timefmt "%Y-%m-%d %H:%M:%S"
+set format x "%d/%m\n%H:%M"
+
+plot 'temperatures_mode2.csv' using 1:3 with lines title "Température en mode 2"

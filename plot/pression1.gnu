@@ -1,0 +1,5 @@
+set datafile separator ";"
+set ylabel "Pression"
+set xlabel "Identifiant de la station"
+set title "Diagramme de barres d'erreur - Pressions par station (mode 1)"
+plot "pressure_mode1.csv" using 1:2:3:4 with errorbars title "Pression"
