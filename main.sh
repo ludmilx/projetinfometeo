@@ -53,7 +53,7 @@ selection_longitude() {
 }
 
 verifier_mode() {
-  if [[ "$1" -ne "1" && "$2" -ne "2" && "$3" -ne "3" ]];
+  if [[ "$1" -ne "1" && "$1" -ne "2" && "$1" -ne "3" ]];
   then
     erreur "ce mode n'existe pas"
   fi
@@ -276,16 +276,16 @@ if [[ -n $t ]]; then
   if [[ $t -eq 1 ]];
   then
 # Extraction des donnees de temperature
-  temp_data=$(awk -F; '{if ($2 == "temperature") print $0}' $filename)
+  temp_data=$(cat $filename | awk '{if ($2 == "temperature") print $0}' FS=';')
 
 # Calcul des valeurs minimales, maximales et moyennes par station
 echo "station,min_temp,avg_temp,max_temp" > temperatures_mode1.csv
 while read line; do
-    station=$(echo $line | awk -F; '{print $1}')
-    temp=$(echo $line | awk -F; '{print $3}')
-    min_temp=$(echo "$temp" | awk 'BEGIN {min = 999999} {if ($1 < min) min = $1} END {print min}')
-    max_temp=$(echo "$temp" | awk 'BEGIN {max = -999999} {if ($1 > max) max = $1} END {print max}')
-    avg_temp=$(echo "$temp" | awk '{sum += $1} END {print sum/NR}')
+    station=$(echo $line | cat $filename | awk '{print $1}' FS=';')
+    temp=$(echo $line | cat $filename | awk '{print $3}' FS=';')
+    min_temp=$(echo "$temp" | cat $filename | awk 'BEGIN {min = 999999} {if ($1 < min) min = $1} END {print min}' FS=';')
+    max_temp=$(echo "$temp" | cat $filename | awk 'BEGIN {max = -999999} {if ($1 > max) max = $1} END {print max}' FS=';')
+    avg_temp=$(echo "$temp" | cat $filename | awk '{sum += $1} END {print sum/NR}' FS=';')
     echo "$station,$min_temp,$avg_temp,$max_temp" >> temperatures_mode1.csv
 done <<< "$temp_data"
 
@@ -327,10 +327,10 @@ done
 # Trier le fichier de sortie en fonction de la date/heure
 ./app -f temperatures_mode2.csv -o temperatures_mode2.csv
 
-elif [[ $t -eq 3 ]]; then
+  elif [[ $t -eq 3 ]]; then
 
   # Extraction des données de température
-  awk -F";" '{print $1 "," $2 "," $3}' $filename > temp_data.csv
+  cat $filename | awk '{print $1 "," $2 "," $3}' FS=';'> temp_data.csv
 
   # Trier les données par date/heure puis par identifiant de station
   sort -t "," -k 2,2 -k 1,1 temp_data.csv > temperatures_mode3.csv
@@ -343,21 +343,20 @@ elif [[ $t -eq 3 ]]; then
     exit 1
   fi
 fi
-
 if [[ -n $p ]]; then
   if [[ $p -eq 1 ]];
     then
   # Extraction des donnees de pression
-    pressure_data=$(awk -F; '{if ($2 == "pressure") print $0}' $filename)
+    pressure_data=$(cat $filename | awk '{if ($2 == "pressure") print $0}' FS=';')
 
   # Calcul des valeurs minimales, maximales et moyennes par station
   echo "station,min_pressure,avg_pressure,max_pressure" > p1.csv
   while read line; do
-      station=$(echo $line | awk -F, '{print $1}')
-      pressure=$(echo $line | awk -F, '{print $7}')
-      min_pressure=$(echo "$pressure" | awk 'BEGIN {min = 999999} {if ($1 < min) min = $1} END {print min}')
-      max_pressure=$(echo "$pressure" | awk 'BEGIN {max = -999999} {if ($1 > max) max = $1} END {print max}')
-      avg_pressure=$(echo "$pressure" | awk '{sum += $1} END {print sum/NR}')
+      station=$(echo $line | awk '{print $1}' FS=';')
+      pressure=$(echo $line | awk '{print $7}' FS=';')
+      min_pressure=$(echo "$pressure" | awk 'BEGIN {min = 999999} {if ($1 < min) min = $1} END {print min}' FS=';')
+      max_pressure=$(echo "$pressure" | awk 'BEGIN {max = -999999} {if ($1 > max) max = $1} END {print max}' FS=';')
+      avg_pressure=$(echo "$pressure" | awk '{sum += $1} END {print sum/NR}' FS=';')
       echo "$station,$min_pressure,$avg_pressure,$max_pressure" >> p1.csv
   done <<< "$pressure_data"
 
@@ -420,7 +419,7 @@ if [[ -n $w ]]; then
   cut -d ";" -f 3,4 $filename > w_data.csv
 
   # Calculer les moyennes de vitesse et d'orientation pour chaque station
-  awk -F ";" '{
+  cat w_data.csv | awk '{
     w_speed_sum[$1] += sqrt($2^2 + $3^2);
     w_dir_sum[$1] += atan2($3, $2);
     w_count[$1]++;
@@ -430,15 +429,17 @@ if [[ -n $w ]]; then
       avg_w_dir = w_dir_sum[station] / w_count[station];
       printf("%s,%.2f,%.2f\n", station, avg_w_speed, avg_w_dir);
     }
-  }' w_data.csv | sort -n -t ";" -k 1 > avg_w.csv
+  }' FS=';' | sort -n -t ";" -k 1 > avg_w.csv
 
   # Supprimer le fichier temporaire
   rm w_data.csv
 fi
 if [[ -n $h ]]; then
-  awk -F";" '{print $1","$14}' $filename | sort -t"," -k2,2nr > h_sorted_by_station.csv
+  cat $filename | awk '{print $1","$14}' FS=';' | sort -t"," -k2,2nr > h_sorted_by_station.csv
+
 fi
 
 if [[ -n $m ]]; then
-  awk -F";" '{print $1","$6}' $filename | sort -t"," -k2,2nr > humidite_sorted_by_station.csv
+  cat $filename | awk '{print $1","$6}' FS=';' | sort -t"," -k2,2nr > humidite_sorted_by_station.csv
+
 fi

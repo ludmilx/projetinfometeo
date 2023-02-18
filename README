@@ -1,6 +1,11 @@
 exemple utilisation :
 ./main.sh --abr -f meteo.csv -o out.csv -r -m
 
+pour les modes de la pression et de la température, il faut espacer t (ou p) puis le mode :
+exemples : ./main.sh --abr -f meteo.csv -o out.csv -r -t 1
+          ./main.sh --abr -f meteo.csv -o out.csv -r -p 3
+
+
 voir code d'erreur ensuite :
 echo $?
 
@@ -8,10 +13,6 @@ compilation:
 
 make
 
-ou
-
-make && ./main
-
 ou (force à recompiler si changement pas trouvé)
 
-make -B && ./main
+make -B 

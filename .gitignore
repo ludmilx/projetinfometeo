@@ -1,1 +1,4 @@
 *.csv
+.DS_Store
+.app
+.app2.bak
